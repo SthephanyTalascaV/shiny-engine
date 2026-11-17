@@ -1,0 +1,9 @@
+{
+  "name": "simulador-cs-nibo",
+  "private": true,
+  "version": "1.0.0",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@google/genai": "^1.20.0"
+  }
+}

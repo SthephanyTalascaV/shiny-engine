@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de Ligações CS · Nibo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --blue:#1769FF;--blue-hover:#0B4EDB;--blue-soft:#EAF2FF;--blue-sel:#F5F8FF;
+  --navy:#101828;--bg:#F7F9FC;--border:#E4EAF2;--muted:#667085;--muted2:#98A2B3;
+  --green:#12B76A;--green-bg:#ECFDF3;--green-bd:#A6F4C5;--green-tx:#027A48;
+  --amber:#F79009;--amber-bg:#FFFAEB;--amber-bd:#FEDF89;
+  --red:#F04438;--red-bg:#FEF3F2;--red-bd:#FECDCA;--red-tx:#B42318;
+  --r-sm:10px;--r-md:14px;--r-lg:18px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--navy);font-size:14px;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+button:disabled{cursor:not-allowed;opacity:.5}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+.side{width:230px;flex:0 0 230px;background:var(--navy);color:#fff;display:flex;flex-direction:column;padding:16px 12px;position:sticky;top:0;height:100vh}
+.brand{display:flex;gap:10px;align-items:center;padding:4px 6px 18px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:var(--blue);display:grid;place-items:center;font-weight:800}
+.brand b{display:block;font-size:13px}.brand small{color:#94a3b8;font-size:11px}
+.nav a{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#cbd5e1;text-decoration:none;font-weight:600;font-size:13px;margin-bottom:2px}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.on{background:var(--blue);color:#fff}
+.side .me{margin-top:auto;padding:10px;border-radius:12px;background:rgba(255,255,255,.05);font-size:12px}
+.side .me small{color:#94a3b8;display:block}
+.main{flex:1;min-width:0;padding:28px 32px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+/* blocks */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;box-shadow:0 4px 20px rgba(16,24,40,.04)}
+.card.dark{background:var(--navy);color:#fff;border-color:rgba(255,255,255,.08)}
+h1{font-size:24px;font-weight:800;letter-spacing:-.02em}
+h2{font-size:16px;font-weight:700}
+h3{font-size:14px;font-weight:700}
+.muted{color:var(--muted)}.small{font-size:12px}
+.label{display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.row{display:flex;gap:12px;align-items:center}.between{justify-content:space-between}.wrapf{flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 16px;border-radius:12px;font-weight:700;font-size:13px;background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(23,105,255,.25);transition:.15s}
+.btn:hover:not(:disabled){background:var(--blue-hover)}
+.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--border);box-shadow:none}
+.btn.ghost:hover:not(:disabled){background:var(--bg)}
+.btn.dark{background:var(--navy);box-shadow:none}
+.btn.red{background:var(--red);box-shadow:0 6px 18px rgba(240,68,56,.25)}
+.btn.sm{min-height:32px;padding:0 12px;font-size:12px;border-radius:10px}
+.input,select.input,textarea.input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;outline:none}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(23,105,255,.12)}
+textarea.input{resize:vertical;font-size:13px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--border);background:var(--bg);color:var(--muted)}
+.pill.blue{background:var(--blue-soft);color:var(--blue-hover);border-color:rgba(23,105,255,.2)}
+.pill.g{background:var(--green-bg);color:var(--green);border-color:var(--green-bd)}
+.pill.a{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd)}
+.pill.r{background:var(--red-bg);color:var(--red);border-color:var(--red-bd)}
+.alert{padding:12px 14px;border-radius:12px;font-size:13px;font-weight:500}
+.alert.r{background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red-tx)}
+.alert.a{background:var(--amber-bg);border:1px solid var(--amber-bd);color:#B54708}
+.alert.b{background:#EFF8FF;border:1px solid #B2DDFF;color:#175CD3}
+/* treinar */
+.prod{border:2px solid var(--border);border-radius:16px;background:#fff;overflow:hidden;transition:.15s}
+.prod.on{border-color:var(--blue);background:var(--blue-sel);box-shadow:0 0 0 3px rgba(23,105,255,.12)}
+.prod-h{display:flex;align-items:center;gap:12px;padding:16px 18px;cursor:pointer}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid var(--muted2);flex:0 0 20px;display:grid;place-items:center}
+.prod.on .radio{border-color:var(--blue);background:var(--blue)}
+.prod.on .radio:after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.ico{width:40px;height:40px;border-radius:12px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:800;flex:0 0 40px}
+.prod-b{padding:4px 18px 18px;border-top:1px solid var(--border);background:rgba(255,255,255,.7)}
+.persona{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
+.pcard{text-align:left;border:1.5px solid var(--border);border-radius:var(--r-md);padding:14px;background:#fff;transition:.15s}
+.pcard:hover{border-color:rgba(23,105,255,.4);transform:translateY(-1px)}
+.pcard.on{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue),0 8px 20px rgba(23,105,255,.15)}
+.pcard b{display:block;font-size:14px}.pcard small{color:var(--muted);font-size:12px;display:block}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--bg)}
+.steps{display:grid;gap:14px;margin-top:14px}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step i{font-style:normal;width:28px;height:28px;flex:0 0 28px;border-radius:8px;background:var(--blue-soft);color:var(--blue);display:grid;place-items:center;font-weight:800;font-size:12px}
+.tips{list-style:none;display:grid;gap:10px;margin-top:14px}
+.tips li{display:flex;gap:10px;color:#e2e8f0;font-size:13px}
+.tips li:before{content:"";width:6px;height:6px;flex:0 0 6px;margin-top:7px;border-radius:2px;background:var(--blue);box-shadow:0 0 6px rgba(23,105,255,.6)}
+/* call */
+.call{background:var(--navy);border-radius:24px;padding:32px;color:#fff;position:relative;overflow:hidden;text-align:center}
+.call:before{content:"";position:absolute;top:-60px;right:-60px;width:280px;height:280px;border-radius:50%;background:rgba(23,105,255,.2);filter:blur(60px)}
+.avatars{display:flex;align-items:center;justify-content:center;gap:40px;position:relative}
+.av{width:80px;height:80px;border-radius:20px;display:grid;place-items:center;font-size:24px;font-weight:800;position:relative;margin:0 auto 8px}
+.av.me{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15)}
+.av.ai{background:var(--blue);box-shadow:0 0 35px rgba(23,105,255,.4)}
+.av .ring{position:absolute;inset:0;border-radius:20px;background:var(--green);opacity:.25;transition:transform .05s}
+.av.ai.talk:after{content:"";position:absolute;inset:0;border-radius:20px;background:var(--blue);opacity:.35;animation:ping 1s infinite}
+@keyframes ping{75%,100%{transform:scale(1.35);opacity:0}}
+.timer{font-size:36px;font-family:ui-monospace,monospace}
+.status{display:inline-block;padding:3px 12px;border-radius:999px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.status.on{background:rgba(18,183,106,.2);color:var(--green);border:1px solid rgba(18,183,106,.4)}
+.status.off{background:rgba(247,144,9,.15);color:var(--amber);border:1px solid rgba(247,144,9,.4)}
+.ctrls{display:flex;gap:14px;justify-content:center;margin-top:22px;position:relative}
+.cbtn{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;font-size:20px;background:#fff;color:var(--navy)}
+.cbtn.muted{background:rgba(255,255,255,.1);color:#94a3b8}
+.cbtn.end{background:var(--red);color:#fff}
+.tx{height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:6px}
+.msg{max-width:80%;padding:10px 14px;border-radius:16px;font-size:13px;white-space:pre-wrap}
+.msg small{display:block;font-size:11px;font-weight:700;opacity:.75;margin-bottom:2px}
+.msg.an{align-self:flex-end;background:var(--blue);color:#fff;border-top-right-radius:4px}
+.msg.cl{align-self:flex-start;background:var(--bg);border:1px solid var(--border);border-top-left-radius:4px}
+.check li{list-style:none;display:flex;gap:10px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--bg);font-size:12px;font-weight:500;margin-bottom:8px}
+.check li:before{content:"";width:14px;height:14px;flex:0 0 14px;border:2px solid #cbd5e1;border-radius:4px;margin-top:2px}
+.overlay{position:fixed;inset:0;background:rgba(16,24,40,.8);display:grid;place-items:center;z-index:50;padding:16px}
+.overlay .card{max-width:380px;text-align:center}
+.spin{width:22px;height:22px;border:3px solid var(--blue-soft);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* tabelas / resultado */
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 14px;background:var(--bg);border-bottom:1px solid var(--border)}
+td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;margin:-24px -24px 20px;background:#fafbfd;border-radius:18px 18px 0 0}
+.tabs button{padding:14px 20px;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--blue);border-color:var(--blue);background:var(--blue-soft)}
+.big{font-size:56px;font-weight:900;letter-spacing:-.03em;line-height:1}
+.prog{height:8px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+.prog>div{height:100%;border-radius:99px}
+.box{padding:16px;border-radius:14px;border:1px solid var(--border);background:var(--bg)}
+.box.g{background:var(--green-bg);border-color:var(--green-bd)}
+.box.r{background:var(--red-bg);border-color:var(--red-bd)}
+.drop{border:2px dashed var(--border);border-radius:16px;padding:28px;text-align:center;cursor:pointer;background:var(--bg)}
+.drop:hover{border-color:var(--blue)}
+.hidden{display:none!important}
+@media(max-width:820px){
+  .app{flex-direction:column}.side{width:auto;height:auto;position:static;flex:none}
+  .nav{display:flex;flex-wrap:wrap;gap:4px}.side .me{display:none}
+  .main{padding:16px}.grid2,.grid3{grid-template-columns:1fr}.bar{flex-direction:column;align-items:stretch}
+  .avatars{gap:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">N</div><div><b>Simulador de Ligações</b><small>Nibo · Customer Success</small></div></div>
+    <nav class="nav">
+      <a href="#/" data-r="">🎯 Treinar</a>
+      <a href="#/historico" data-r="historico">🕘 Histórico</a>
+      <a href="#/criar-agente" data-r="criar-agente">✨ Criar Agente via Call</a>
+      <a href="#/config" data-r="config">⚙️ Personas & Rubrica</a>
+    </nav>
+    <div class="me" id="meBox"></div>
+  </aside>
+  <main class="main"><div class="wrap" id="view"></div></main>
+</div>
+
+<script>
+/* =====================================================================
+   DADOS PADRÃO
+   ===================================================================== */
+const VOICES=[["Zephyr","Brilhante","Mulher"],["Puck","Animada","Homem"],["Charon","Informativa","Homem"],["Kore","Firme","Mulher"],["Fenrir","Empolgada","Homem"],["Leda","Jovem","Mulher"],["Orus","Firme","Homem"],["Aoede","Leve","Mulher"],["Callirrhoe","Tranquila","Mulher"],["Autonoe","Brilhante","Mulher"],["Enceladus","Sussurrada","Homem"],["Iapetus","Clara","Homem"],["Umbriel","Tranquila","Homem"],["Algieba","Suave","Homem"],["Despina","Suave","Mulher"],["Erinome","Clara","Mulher"],["Algenib","Rascante","Homem"],["Rasalgethi","Informativa","Homem"],["Laomedeia","Animada","Mulher"],["Achernar","Doce","Mulher"],["Alnilam","Firme","Homem"],["Schedar","Equilibrada","Homem"],["Gacrux","Madura","Mulher"],["Pulcherrima","Direta","Mulher"],["Achird","Amigável","Homem"],["Zubenelgenubi","Descontraída","Homem"],["Vindemiatrix","Gentil","Mulher"],["Sadachbia","Vibrante","Homem"],["Sadaltager","Segura","Homem"],["Sulafat","Calorosa","Mulher"]];
+const genderOf=v=>(VOICES.find(x=>x[0].toLowerCase()===String(v||"").toLowerCase())||[0,0,"Homem"])[2];
+
+const DEFAULT_AGENTS=[
+ {id:"radar-1",active:true,productName:"Radar e-CAC",officeName:"Lima & Rocha Contábil",decisionMakerName:"Fernanda Lima",voice:"Kore",
+  name:"Sócia sobrecarregada (já cliente Nibo)",
+  description:"Sócia de escritório com ~180 empresas do Simples. Já usa Nibo, confere o e-CAC cliente a cliente e desconfia de custo extra.",
+  persona:'Você é a Fernanda Lima, sócia do escritório "Lima & Rocha Contábil", em Campinas. O escritório atende cerca de 180 empresas, a maioria do Simples Nacional, e já é cliente Nibo há 2 anos. Hoje a sua equipe fiscal (3 pessoas) entra no e-CAC cliente por cliente, com certificado digital, para checar pendências, mensagens da caixa postal e situação fiscal. Isso vira um mutirão no fim do mês e, mesmo assim, há meses em que uma intimação ou exclusão do Simples passa batido e você descobre pelo próprio cliente, irritado. Você está ocupada, fala rápido, é cordial mas objetiva. Você acha que já paga caro em sistemas e tem receio de "mais uma ferramenta" que a equipe não vai usar. Você só se abre se o analista fizer boas perguntas sobre a rotina e mostrar que entende o seu problema. Você NÃO conhece técnicas de venda, não fala de checklist ou nota, e não facilita a vida do analista.',
+  objections:["Olha, a gente já confere o e-CAC aqui, minha equipe dá conta.","Já pago bastante pra Nibo, não tenho orçamento pra mais um módulo agora.","Toda ferramenta nova a equipe começa animada e depois abandona.","Me manda por e-mail que eu vejo com calma depois."],
+  scriptItems:["Abrir a ligação se apresentando e conectando com o uso atual da Nibo","Investigar como o escritório monitora o e-CAC hoje (tempo, pessoas, falhas)","Explorar a implicação (multa, cliente irritado, exclusão do Simples)","Conectar o Radar e-CAC à dor levantada com benefício concreto","Contornar objeção de preço/orçamento","Propor próximo passo concreto (demo/ativação com data e hora)"]},
+ {id:"radar-2",active:true,productName:"Radar e-CAC",officeName:"Dias Assessoria Contábil",decisionMakerName:"Roberto Dias",voice:"Charon",
+  name:"Dono de escritório pequeno e cético",
+  description:"Contador com ~40 clientes que olha o e-CAC 'quando dá problema' e é muito sensível a preço.",
+  persona:'Você é o Roberto Dias, dono da "Dias Assessoria Contábil", um escritório pequeno com uns 40 clientes e 2 funcionários. Você mesmo cuida da parte fiscal. Você só olha o e-CAC "quando dá problema" e acha que, com poucos clientes, não precisa de automação. Já tomou uma multa de um cliente por uma pendência que não viu, mas minimiza ("acontece"). Você é desconfiado, um pouco ríspido no começo, responde curto e testa o analista. Se ele for genérico ou ficar lendo script, você corta e diz que está ocupado. Se ele fizer perguntas boas e trouxer números simples (tempo, risco), você amolece aos poucos. Você NÃO conhece técnicas de venda e não facilita.',
+  objections:["Com 40 clientes eu dou conta de olhar na mão.","Isso aí é coisa pra escritório grande.","Quanto custa? Ah, então não dá.","Agora não é um bom momento, liga mês que vem."],
+  scriptItems:["Rapport rápido e motivo claro da ligação","Perguntas sobre a rotina de checagem do e-CAC","Trazer a dor à tona (multa/pendência que passou)","Mostrar valor proporcional ao tamanho do escritório","Contornar 'não é o momento'","Agendar próximo passo"]},
+ {id:"radar-3",active:true,productName:"Radar e-CAC",officeName:"Grupo Vértice Contabilidade",decisionMakerName:"Camila Torres",voice:"Leda",
+  name:"Coordenadora fiscal técnica (não decide sozinha)",
+  description:"Coordenadora de escritório grande, técnica, pergunta de procuração e integração e precisa levar ao sócio.",
+  persona:'Você é a Camila Torres, coordenadora do setor fiscal do "Grupo Vértice Contabilidade", escritório com mais de 500 empresas (Simples e Lucro Presumido). Você é técnica e detalhista: pergunta sobre procuração eletrônica, certificado digital, frequência de consulta, como aparecem as mensagens da caixa postal, certidões, parcelamentos e se dá para distribuir pendências para a equipe. Você gosta da ideia, mas quem assina é o sócio, Sr. Marcos, e você precisa de argumentos e números para levar a ele. Você é educada, mas não aceita resposta vaga — se o analista não souber, você percebe. Você NÃO conhece técnicas de venda e não facilita.',
+  objections:["Como funciona a procuração? Não quero ter que pedir pra 500 clientes.","Quem decide isso é o Marcos, eu só consigo levar pra ele.","A gente já tem um robô interno que faz parte disso.","Preciso de algo por escrito com números pra apresentar."],
+  scriptItems:["Apresentação e alinhamento de expectativa","Mapear o processo atual e o volume da carteira","Responder dúvidas técnicas com segurança","Identificar o decisor e o processo de decisão","Municiar a coordenadora com valor/ROI para o sócio","Combinar próximo passo incluindo o decisor"]}
+];
+
+const DEFAULT_PROFILE={
+ preamble:"Você é um coach de Customer Success extremamente criterioso e técnico, especialista em expansão (upsell) de carteira B2B. Analise a transcrição de uma ligação simulada entre um ANALISTA de CS da Nibo e um CLIENTE (contador), com base em SPIN Selling, escuta ativa, conexão de valor, tratamento de objeções e condução ao próximo passo.",
+ temperature:0,
+ criteria:[
+  {label:"Abertura e Rapport",weight:1,rubric:"9–10: abre com clareza (nome, Nibo, motivo) e conecta com o uso atual do cliente. 7–8: cordial e organizada, rapport superficial. 4–6: protocolar, sem conexão. 1–3: sem apresentação clara ou já entra vendendo."},
+  {label:"Diagnóstico da Rotina (SPIN)",weight:1,rubric:"9–10: 2+ perguntas abertas encadeadas (situação/problema/implicação/necessidade) antes de falar do produto. 7–8: ao menos 1 boa pergunta de cenário antes do pitch. 4–6: perguntas fechadas/automáticas. 1–3: nenhuma pergunta; monólogo."},
+  {label:"Conexão de Valor do Radar e-CAC",weight:1,rubric:"9–10: liga o Radar à dor levantada e traduz em ganho concreto (tempo, risco, multa evitada). 7–8: benefícios práticos, mas centrado em funcionalidade. 4–6: lista recursos. 1–3: só preço ou argumento apelativo."},
+  {label:"Contorno de Objeções",weight:1,rubric:"9–10: acolhe com empatia, mantém o tom e usa a objeção para avançar. 7–8: calmo e lógico, mesmo com argumento fraco. 4–6: hesita, pede desculpas demais. 1–3: defensivo, discute ou desiste."},
+  {label:"Condução ao Próximo Passo",weight:1,rubric:"9–10: propõe passo específico (dia/hora de demo/ativação) e confirma. 7–8: pede próximo passo de forma vaga. 4–6: encerra sem avanço. 1–3: abandona a ligação."}
+ ]
+};
+const DEFAULT_SETTINGS={analystName:"",liveModel:"gemini-2.5-flash-native-audio-preview-09-2025",profile:DEFAULT_PROFILE};
+
+/* =====================================================================
+   STORE (localStorage + IndexedDB p/ áudio)
+   ===================================================================== */
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.error(e)}}};
+const db={
+  agents:()=>LS.get("sim_agents",null)||(LS.set("sim_agents",DEFAULT_AGENTS),DEFAULT_AGENTS),
+  saveAgent(a){const l=db.agents();const i=l.findIndex(x=>x.id===a.id);i>=0?l[i]=a:l.push(a);LS.set("sim_agents",l)},
+  delAgent(id){LS.set("sim_agents",db.agents().filter(a=>a.id!==id))},
+  runs:()=>LS.get("sim_runs",[]),
+  run:id=>db.runs().find(r=>r.id===id),
+  saveRun(r){const l=db.runs();const i=l.findIndex(x=>x.id===r.id);i>=0?l[i]={...l[i],...r}:l.unshift(r);LS.set("sim_runs",l)},
+  delRun(id){LS.set("sim_runs",db.runs().filter(r=>r.id!==id));idb.del(id)},
+  settings:()=>({...DEFAULT_SETTINGS,...LS.get("sim_settings",{})}),
+  saveSettings(s){LS.set("sim_settings",{...db.settings(),...s})}
+};
+const idb={
+  open:()=>new Promise((ok,ko)=>{const r=indexedDB.open("SimuladorAudio",1);r.onupgradeneeded=()=>r.result.createObjectStore("audio");r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}),
+  async put(k,blob){try{const d=await idb.open();d.transaction("audio","readwrite").objectStore("audio").put(blob,k)}catch(e){console.error(e)}},
+  async get(k){try{const d=await idb.open();return await new Promise(ok=>{const q=d.transaction("audio").objectStore("audio").get(k);q.onsuccess=()=>ok(q.result||null);q.onerror=()=>ok(null)})}catch{return null}},
+  async del(k){try{const d=await idb.open();d.transaction("audio","readwrite").objectStore("audio").delete(k)}catch{}}
+};
+
+/* =====================================================================
+   HELPERS
+   ===================================================================== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const mmss=s=>`${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
+const tone=s=>s>=75?{c:"g",l:"Positivo",col:"var(--green)"}:s>=50?{c:"a",l:"Atenção",col:"var(--amber)"}:{c:"r",l:"Crítico",col:"var(--red)"};
+function calcScore(criteria,scores){
+  if(!Array.isArray(scores)||!scores.length)return 0;
+  let s=0,w=0;for(const c of scores){const k=criteria.find(x=>x.label===c.criterion);const wt=k?Number(k.weight)||1:1;s+=(Number(c.score)||0)*wt;w+=wt}
+  return w?Math.round(s/w*10):0;
+}
+async function api(path,body){
+  const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(j.error||`Erro ${r.status}`);
+  return j;
+}
+const txText=t=>(t||[]).map(m=>`[${m.timestamp}] ${m.speaker==="ANALISTA"?"ANALISTA":"CLIENTE"}: ${m.text}`).join("\n");
+
+/* =====================================================================
+   ROUTER
+   ===================================================================== */
+let cleanup=null;
+function route(){
+  if(cleanup){cleanup();cleanup=null}
+  const h=location.hash.replace(/^#\/?/,"");const [p,arg]=h.split("/");
+  document.querySelectorAll(".nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===(p==="sessao"?"":p==="resultado"?"historico":p||"")));
+  const s=db.settings();$("#meBox").innerHTML=`<small>Analista</small><b>${esc(s.analystName||"Defina seu nome em ⚙️")}</b>`;
+  ({"":viewHome,historico:viewHistory,resultado:viewResult,sessao:viewSession,"criar-agente":viewClone,config:viewConfig}[p]||viewHome)(arg);
+  window.scrollTo(0,0);
+}
+addEventListener("hashchange",route);
+
+/* =====================================================================
+   1) TREINAR
+   ===================================================================== */
+let selProd=null,selAgent=null;
+function viewHome(){
+  const agents=db.agents().filter(a=>a.active!==false);
+  const prods=[...new Set(agents.map(a=>a.productName||"Geral"))];
+  const v=$("#view");
+  const draw=()=>{
+    const ag=agents.find(a=>a.id===selAgent);
+    v.innerHTML=`
+    <section class="card">
+      <div class="row between wrapf" style="margin-bottom:20px">
+        <div><h1>Simulador de Ligações CS</h1><p class="muted">Pratique ligações de expansão com clientes contadores hiper-realistas. A IA atende por voz e avalia sua performance.</p></div>
+        <span class="pill blue">● ${agents.length} ${agents.length===1?"cenário ativo":"cenários ativos"}</span>
+      </div>
+      <span class="label">1. Selecione o produto</span>
+      <div style="display:grid;gap:12px">
+      ${prods.map(p=>{const list=agents.filter(a=>(a.productName||"Geral")===p);const on=selProd===p;return`
+        <div class="prod ${on?"on":""}">
+          <div class="prod-h" data-prod="${esc(p)}"><span class="radio"></span><span class="ico">${esc(p[0])}</span>
+            <div style="flex:1"><b style="font-size:15px">${esc(p)}</b></div><span class="pill ${on?"blue":""}">${list.length} ${list.length===1?"cenário":"cenários"}</span></div>
+          ${on?`<div class="prod-b"><span class="label" style="margin-top:12px;color:var(--navy)">2. Escolha a persona do cliente <span style="color:var(--red)">*</span></span>
+            <div class="persona">${list.map(a=>`<button class="pcard ${selAgent===a.id?"on":""}" data-ag="${a.id}">
+              <b>${esc(a.decisionMakerName)}</b><small>${esc(a.officeName)} · voz ${genderOf(a.voice).toLowerCase()}</small>
+              <small style="margin-top:6px">${esc(a.description||a.name)}</small></button>`).join("")}</div></div>`:""}
+        </div>`}).join("")||`<div class="alert a">Nenhuma persona ativa. Crie uma em ⚙️ ou em "Criar Agente via Call".</div>`}
+      </div>
+      <div class="bar" style="margin-top:20px">
+        <div><span class="label" style="margin:0">Status da seleção</span>
+          ${ag?`<b>🟢 ${esc(ag.productName)} · ${esc(ag.officeName)} (${esc(ag.decisionMakerName)})</b>`:`<span class="muted">${selProd?"Agora escolha a persona para liberar a ligação":"Marque um produto acima para começar"}</span>`}</div>
+        <button class="btn" id="go" ${ag?"":"disabled"} style="min-width:160px;min-height:48px">📞 Ligar agora</button>
+      </div>
+    </section>
+    <section class="grid2">
+      <article class="card"><h2>Como funciona o treino</h2><div class="steps">
+        <div class="step"><i>1</i><div><b class="small">Escolha produto e persona</b><p class="small muted">Cada persona é um cliente com dores, temperamento e objeções próprias.</p></div></div>
+        <div class="step"><i>2</i><div><b class="small">Ligue e conduza pelo microfone</b><p class="small muted">A IA atende como o cliente, em tempo real e com voz humanizada. Use fone.</p></div></div>
+        <div class="step"><i>3</i><div><b class="small">Receba a avaliação</b><p class="small muted">Nota por critério, etapas, aderência ao checklist e transcrição com áudio.</p></div></div></div></article>
+      <article class="card dark"><h2 style="color:#fff">🎯 Dicas para a ligação de expansão</h2><ul class="tips">
+        <li>Comece pelo uso atual da Nibo: o cliente já confia em você, use isso.</li>
+        <li>Pergunte como ele monitora o e-CAC hoje antes de falar do Radar.</li>
+        <li>Transforme a dor em número: horas por mês, multas, clientes perdidos.</li>
+        <li>Contorne a primeira objeção antes de aceitar o "me manda por e-mail".</li></ul></article>
+    </section>`;
+    v.querySelectorAll("[data-prod]").forEach(e=>e.onclick=()=>{if(selProd!==e.dataset.prod){selProd=e.dataset.prod;selAgent=null}draw()});
+    v.querySelectorAll("[data-ag]").forEach(e=>e.onclick=()=>{selAgent=e.dataset.ag;draw()});
+    const go=$("#go");if(go)go.onclick=()=>{location.hash=`#/sessao/${selAgent}`};
+  };
+  draw();
+}
+
+/* =====================================================================
+   2) SESSÃO DE VOZ (Gemini Live via WebSocket + token efêmero)
+   ===================================================================== */
+function buildSystemPrompt(a){
+  return `${a.persona}
+
+## OBJEÇÕES QUE VOCÊ DEVE USAR NATURALMENTE AO LONGO DA LIGAÇÃO
+${(a.objections||[]).map(o=>"- "+o).join("\n")}
+
+## REGRAS DE ATUAÇÃO
+- Você é o CLIENTE (${a.decisionMakerName}, do escritório ${a.officeName}) recebendo uma ligação de um analista de Customer Success da Nibo. O assunto provável é: ${a.productName}.
+- Fale SEMPRE em português do Brasil, como numa ligação telefônica real: frases curtas, naturais, com hesitações ocasionais ("é...", "olha...").
+- Respostas de 1 a 3 frases. Não faça discursos. Deixe o analista conduzir.
+- Nunca diga que é uma IA, um modelo ou uma simulação. Nunca dê dicas ao analista nem avalie a performance dele.
+- Só revele dores profundas se o analista fizer boas perguntas. Se ele for genérico, seja frio e apressado.
+- Se o analista propor um próximo passo concreto e bem justificado, você pode aceitar.
+- Quando a ligação começar, atenda como quem recebe uma chamada: "Alô?" ou "${a.officeName}, ${a.decisionMakerName.split(" ")[0]} falando."`;
+}
+
+function viewSession(agentId){
+  const a=db.agents().find(x=>x.id===agentId);
+  if(!a){location.hash="#/";return}
+  const s=db.settings();
+  const v=$("#view");
+  v.innerHTML=`
+  <section class="call">
+    <div id="pre">
+      <div class="av ai" style="margin-bottom:16px">🎙️</div>
+      <h2 style="color:#fff;font-size:20px">Pronto para ligar para ${esc(a.decisionMakerName)}?</h2>
+      <p style="color:#cbd5e1;margin:8px auto 20px;max-width:440px">${esc(a.officeName)} · ${esc(a.productName)}. Libere o microfone e use fone de ouvido para evitar eco.</p>
+      <div id="preErr"></div>
+      <button class="btn" id="start" style="min-height:48px;padding:0 28px">🎙️ Conectar microfone e ligar</button>
+    </div>
+    <div id="live" class="hidden">
+      <div id="liveErr"></div>
+      <div class="avatars">
+        <div><div class="av me"><span class="ring" id="ring" style="transform:scale(0)"></span>${esc((s.analystName||"Você")[0])}</div><small style="color:#cbd5e1">${esc(s.analystName||"Você")}</small></div>
+        <div><span class="status off" id="st">Conectando...</span><div class="timer" id="tm">00:00</div></div>
+        <div><div class="av ai" id="aiAv">AI</div><small style="color:#7fb0ff">${esc(a.decisionMakerName)} (${genderOf(a.voice)})</small></div>
+      </div>
+      <div class="ctrls"><button class="cbtn" id="mute" title="Mutar">🎙️</button><button class="cbtn end" id="end" title="Encerrar">📞</button></div>
+    </div>
+  </section>
+  <section class="grid3" style="grid-template-columns:2fr 1fr">
+    <div class="card"><div class="row between" style="margin-bottom:12px"><h2>Transcrição em tempo real</h2><span class="pill g">● ao vivo</span></div>
+      <div class="tx" id="tx"><p class="muted small" style="text-align:center;margin-top:40px">A conversa aparece aqui...</p></div></div>
+    <div class="card"><h2 style="margin-bottom:12px">✅ Checklist esperado</h2>
+      ${(a.scriptItems||[]).length?`<ul class="check">${a.scriptItems.map(i=>`<li>${esc(i)}</li>`).join("")}</ul>`:`<p class="small muted">Sem checklist fixo. Descubra a dor real e conduza a um próximo passo.</p>`}</div>
+  </section>
+  <div id="ov"></div>`;
+
+  const runId=uid();
+  let ws=null,micStream=null,capCtx=null,proc=null,playCtx=null,recDest=null,recorder=null,recChunks=[],
+      nextT=0,sources=[],secs=0,timer=null,muted=false,ended=false,transcript=[],connected=false,startedAt=0;
+
+  const addTx=(speaker,text)=>{
+    if(!text)return;
+    const last=transcript[transcript.length-1];
+    if(last&&last.speaker===speaker){last.text+=text}
+    else transcript.push({speaker,text:text.trimStart(),timestamp:mmss(secs)});
+    const box=$("#tx");if(!box)return;
+    box.innerHTML=transcript.map(m=>`<div class="msg ${m.speaker==="ANALISTA"?"an":"cl"}"><small>${m.speaker==="ANALISTA"?"Você":esc(a.decisionMakerName)} · ${m.timestamp}</small>${esc(m.text)}</div>`).join("");
+    box.scrollTop=box.scrollHeight;
+  };
+  const setTalking=on=>{const e=$("#aiAv");e&&e.classList.toggle("talk",on)};
+  const stopPlayback=()=>{const t=playCtx?.currentTime||0;sources.forEach(s=>{try{s.stop(t)}catch{}});sources=[];nextT=t;setTalking(false)};
+
+  function playPcm(b64){
+    const bin=atob(b64),n=bin.length>>1,buf=playCtx.createBuffer(1,n,24000),ch=buf.getChannelData(0);
+    for(let i=0;i<n;i++){let v=bin.charCodeAt(i*2)|(bin.charCodeAt(i*2+1)<<8);if(v>=32768)v-=65536;ch[i]=v/32768}
+    const src=playCtx.createBufferSource();src.buffer=buf;
+    src.connect(playCtx.destination);if(recDest)src.connect(recDest);
+    const now=playCtx.currentTime;if(nextT<now)nextT=now+.04;
+    src.start(nextT);nextT+=buf.duration;sources.push(src);setTalking(true);
+    src.onended=()=>{sources=sources.filter(x=>x!==src);if(!sources.length)setTalking(false)};
+  }
+
+  async function start(){
+    const btn=$("#start");btn.disabled=true;btn.textContent="Conectando...";$("#preErr").innerHTML="";
+    try{
+      micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    }catch(e){
+      const msg=e.name==="NotAllowedError"?"Permissão de microfone negada. Clique no cadeado 🔒 da barra de endereço, libere o microfone e tente de novo."
+        :e.name==="NotFoundError"?"Nenhum microfone encontrado. Conecte um fone/headset."
+        :e.name==="NotReadableError"?"O microfone está em uso por outro app (Teams, Meet, Zoom). Feche-os e tente de novo."
+        :"Não foi possível acessar o microfone.";
+      $("#preErr").innerHTML=`<div class="alert r" style="margin-bottom:14px">${msg}</div>`;btn.disabled=false;btn.textContent="Tentar novamente";return;
+    }
+    try{
+      const {token}=await api("/api/live-token");
+      playCtx=new (window.AudioContext||window.webkitAudioContext)();await playCtx.resume();
+      // gravação mista (você + IA)
+      recDest=playCtx.createMediaStreamDestination();
+      playCtx.createMediaStreamSource(micStream).connect(recDest);
+      const mime=["audio/webm","audio/mp4","audio/ogg"].find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||"";
+      recorder=new MediaRecorder(recDest.stream,mime?{mimeType:mime}:undefined);
+      recorder.ondataavailable=e=>e.data.size&&recChunks.push(e.data);
+
+      const url=`wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContentConstrained?access_token=${encodeURIComponent(token)}`;
+      ws=new WebSocket(url);
+      ws.onopen=()=>{
+        ws.send(JSON.stringify({setup:{
+          model:`models/${s.liveModel}`,
+          generationConfig:{responseModalities:["AUDIO"],speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:a.voice||"Aoede"}}}},
+          systemInstruction:{parts:[{text:buildSystemPrompt(a)}]},
+          inputAudioTranscription:{},outputAudioTranscription:{}
+        }}));
+      };
+      ws.onmessage=async ev=>{
+        const raw=typeof ev.data==="string"?ev.data:await ev.data.text();
+        let m;try{m=JSON.parse(raw)}catch{return}
+        if(m.setupComplete){onConnected();return}
+        const sc=m.serverContent;
+        if(sc){
+          if(sc.interrupted)stopPlayback();
+          for(const p of sc.modelTurn?.parts||[]) if(p.inlineData?.data)playPcm(p.inlineData.data);
+          if(sc.inputTranscription?.text)addTx("ANALISTA",sc.inputTranscription.text);
+          if(sc.outputTranscription?.text)addTx("CLIENTE",sc.outputTranscription.text);
+        }
+        if(m.goAway)console.warn("[live] sessão vai encerrar",m.goAway);
+      };
+      ws.onerror=e=>console.error("ws error",e);
+      ws.onclose=e=>{
+        if(ended)return;
+        if(!connected){
+          $("#pre").classList.remove("hidden");$("#live").classList.add("hidden");
+          $("#preErr").innerHTML=`<div class="alert r" style="margin-bottom:14px">A conexão com o Gemini foi recusada${e.reason?": "+esc(e.reason):""}. Confira o modelo de voz em ⚙️ e a GEMINI_API_KEY na Vercel.</div>`;
+          btn.disabled=false;btn.textContent="Tentar novamente";teardown();
+        }else{ $("#liveErr").innerHTML=`<div class="alert a" style="margin-bottom:14px">A conexão caiu${e.reason?" ("+esc(e.reason)+")":""}. Encerre para salvar e avaliar.</div>`; $("#st").className="status off";$("#st").textContent="Desconectado"}
+      };
+    }catch(e){
+      $("#preErr").innerHTML=`<div class="alert r" style="margin-bottom:14px">${esc(e.message)}</div>`;btn.disabled=false;btn.textContent="Tentar novamente";teardown();
+    }
+  }
+
+  function onConnected(){
+    connected=true;startedAt=Date.now();
+    $("#pre").classList.add("hidden");$("#live").classList.remove("hidden");
+    $("#st").className="status on";$("#st").textContent="Conectado";
+    timer=setInterval(()=>{secs++;const t=$("#tm");t&&(t.textContent=mmss(secs))},1000);
+    recorder&&recorder.start(250);
+    // captura do mic em PCM16 16kHz
+    capCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});
+    const srcNode=capCtx.createMediaStreamSource(micStream);
+    const hp=capCtx.createBiquadFilter();hp.type="highpass";hp.frequency.value=85;
+    proc=capCtx.createScriptProcessor(4096,1,1);
+    srcNode.connect(hp);hp.connect(proc);proc.connect(capCtx.destination);
+    proc.onaudioprocess=e=>{
+      const inp=e.inputBuffer.getChannelData(0);e.outputBuffer.getChannelData(0).fill(0);
+      let sum=0;for(let i=0;i<inp.length;i++)sum+=inp[i]*inp[i];
+      const lvl=Math.min(1,Math.sqrt(sum/inp.length)*10);const r=$("#ring");r&&(r.style.transform=`scale(${muted?0:1+lvl*1.5})`);
+      if(!ws||ws.readyState!==1)return;
+      const pcm=new Int16Array(inp.length);
+      for(let i=0;i<inp.length;i++){const v=muted?0:Math.max(-1,Math.min(1,inp[i]));pcm[i]=v<0?v*32768:v*32767}
+      const bytes=new Uint8Array(pcm.buffer);let bin="";for(let i=0;i<bytes.length;i+=32768)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+32768));
+      ws.send(JSON.stringify({realtimeInput:{audio:{data:btoa(bin),mimeType:"audio/pcm;rate=16000"}}}));
+    };
+    // faz o "telefone tocar": o cliente atende
+    ws.send(JSON.stringify({clientContent:{turns:[{role:"user",parts:[{text:"(O telefone tocou. Atenda a ligação como o cliente.)"}]}],turnComplete:true}}));
+  }
+
+  function teardown(){
+    clearInterval(timer);
+    try{proc&&proc.disconnect()}catch{}
+    try{capCtx&&capCtx.state!=="closed"&&capCtx.close()}catch{}
+    micStream&&micStream.getTracks().forEach(t=>t.stop());
+    try{ws&&ws.readyState<2&&ws.close()}catch{}
+    stopPlayback();
+  }
+
+  async function endCall(){
+    if(ended)return;ended=true;
+    $("#ov").innerHTML=`<div class="overlay"><div class="card"><span class="spin"></span><h2 style="margin:14px 0 6px" id="ovT">Finalizando gravação...</h2><p class="small muted">A IA está calculando a pontuação por critério.</p></div></div>`;
+    const blob=await new Promise(ok=>{if(!recorder||recorder.state==="inactive")return ok(null);recorder.onstop=()=>ok(recChunks.length?new Blob(recChunks,{type:recorder.mimeType||"audio/webm"}):null);try{recorder.stop()}catch{ok(null)}});
+    teardown();try{playCtx&&playCtx.close()}catch{}
+    if(blob)await idb.put(runId,blob);
+    const run={id:runId,agentId:a.id,agentName:`${a.officeName} · ${a.decisionMakerName}`,productName:a.productName,analyst:s.analystName||"",
+      date:new Date().toISOString(),durationSeconds:secs,transcript,score:0,adherenceScore:0,stages:[],criteriaScores:[],completedItems:[],
+      objectionsHandledCount:0,techniquesUsed:[],mainStrength:"Processando avaliação...",mainImprovement:"Processando avaliação...",hasAudio:!!blob};
+    db.saveRun(run);
+    $("#ovT").textContent="Avaliando com IA...";
+    await evaluateRun(run.id).catch(e=>console.error(e));
+    location.hash=`#/resultado/${runId}`;
+  }
+
+  $("#start").onclick=start;
+  v.addEventListener("click",e=>{
+    if(e.target.closest("#end"))endCall();
+    if(e.target.closest("#mute")){muted=!muted;const b=$("#mute");b.classList.toggle("muted",muted);b.textContent=muted?"🔇":"🎙️"}
+  });
+  const warn=e=>{if(connected&&!ended){e.preventDefault();e.returnValue=""}};
+  addEventListener("beforeunload",warn);
+  cleanup=()=>{removeEventListener("beforeunload",warn);if(!ended){ended=true;teardown();try{playCtx&&playCtx.close()}catch{}}};
+}
+
+async function evaluateRun(id){
+  const r=db.run(id);if(!r)return;
+  const a=db.agents().find(x=>x.id===r.agentId)||{};
+  const profile=db.settings().profile;
+  const out=await api("/api/evaluate",{transcript:txText(r.transcript)||"Nenhuma conversa aconteceu.",scenario:a.persona||"",scriptItems:a.scriptItems||[],profile});
+  db.saveRun({id,...out,score:calcScore(profile.criteria,out.criteriaScores),evaluatedAt:new Date().toISOString()});
+}
+
+/* =====================================================================
+   3) HISTÓRICO
+   ===================================================================== */
+function viewHistory(){
+  const v=$("#view");
+  const draw=(q="")=>{
+    const runs=db.runs().filter(r=>(r.agentName+" "+r.productName).toLowerCase().includes(q.toLowerCase()));
+    const avg=runs.filter(r=>r.score>0);const m=avg.length?Math.round(avg.reduce((s,r)=>s+r.score,0)/avg.length):0;
+    v.querySelector("#list").innerHTML=runs.length?runs.map(r=>{const t=tone(r.score);return`<tr>
+      <td><b>${esc(r.agentName)}</b><br><small class="muted">${esc(r.productName)}</small></td>
+      <td class="muted">${new Date(r.date).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</td>
+      <td class="muted" style="font-family:monospace">${mmss(r.durationSeconds||0)}</td>
+      <td><span class="pill ${t.c}">${r.score} pts</span></td>
+      <td>${r.adherenceScore||0}%</td>
+      <td style="text-align:right"><a class="btn sm ghost" href="#/resultado/${r.id}">Ver detalhes</a></td></tr>`}).join("")
+      :`<tr><td colspan="6" style="text-align:center;padding:40px" class="muted">Nenhuma simulação ainda. <a href="#/">Fazer a primeira</a></td></tr>`;
+    v.querySelector("#kpi").innerHTML=`<span class="pill blue">${runs.length} simulações</span> <span class="pill ${tone(m).c}">média ${m} pts</span>`;
+  };
+  v.innerHTML=`<div class="row between wrapf"><div><h1>Histórico de simulações</h1><p class="muted small">Suas ligações neste navegador</p></div><div id="kpi"></div></div>
+  <section class="card" style="padding:0;overflow:hidden">
+    <div style="padding:14px;border-bottom:1px solid var(--border);background:var(--bg)"><input class="input" id="q" placeholder="Buscar por cenário..." style="max-width:360px"></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Cenário</th><th>Data</th><th>Duração</th><th>Score</th><th>Aderência</th><th></th></tr></thead><tbody id="list"></tbody></table></div>
+  </section>`;
+  draw();$("#q").oninput=e=>draw(e.target.value);
+}
+
+/* =====================================================================
+   4) RESULTADO
+   ===================================================================== */
+async function viewResult(id){
+  const v=$("#view");let r=db.run(id);
+  if(!r){v.innerHTML=`<div class="card">Simulação não encontrada.</div>`;return}
+  let tab="resumo",audioUrl=null;
+  const blob=await idb.get(id);if(blob)audioUrl=URL.createObjectURL(blob);
+  cleanup=()=>audioUrl&&URL.revokeObjectURL(audioUrl);
+  const prog=(n,col)=>`<div class="prog"><div style="width:${Math.max(0,Math.min(100,n))}%;background:${col}"></div></div>`;
+  const draw=()=>{
+    r=db.run(id);const t=tone(r.score);const pending=r.mainStrength==="Processando avaliação...";
+    v.innerHTML=`<div class="row between wrapf"><div><a href="#/historico" class="small muted">← Voltar para histórico</a><h1>Resultado da ligação</h1>
+      <p class="muted small">${esc(r.agentName)} · ${new Date(r.date).toLocaleString("pt-BR")} · ${mmss(r.durationSeconds||0)}</p></div>
+      <div class="row"><button class="btn dark sm" id="re">↻ Refazer avaliação</button><button class="btn ghost sm" id="exp">⬇ Exportar .txt</button><button class="btn ghost sm" id="del" style="color:var(--red)">Excluir</button></div></div>
+    <section class="card">
+      <div class="tabs">${[["resumo","Resumo"],["etapas","Etapas"],["criterios","Critérios & Aderência"],["tx","Transcrição"]].map(([k,l])=>`<button data-t="${k}" class="${tab===k?"on":""}">${l}</button>`).join("")}</div>
+      ${pending?`<div class="alert b" style="margin-bottom:16px">⏳ A avaliação ainda não foi concluída. <button class="btn sm" id="re2" style="margin-left:8px">Avaliar agora</button></div>`:""}
+      ${tab==="resumo"?`
+        ${audioUrl?`<div class="card dark" style="padding:16px;margin-bottom:20px"><div class="row wrapf"><b style="flex:1">🎧 Gravação da ligação</b><audio controls src="${audioUrl}" style="flex:2;min-width:240px"></audio><a class="btn sm" href="${audioUrl}" download="ligacao-${id}.webm">Baixar</a></div></div>`
+          :`<div class="box small muted" style="margin-bottom:20px">Gravação indisponível neste navegador.</div>`}
+        <div class="grid3" style="grid-template-columns:1fr 2fr">
+          <div class="box" style="text-align:center"><span class="label">Score de performance</span><div class="big" style="color:${t.col}">${r.score}<small style="font-size:14px;color:var(--muted)">/100</small></div><span class="pill ${t.c}" style="margin-top:10px">${t.l}</span></div>
+          <div style="display:grid;gap:12px"><div class="box g"><h3 style="color:var(--green-tx)">✓ Principal ponto forte</h3><p style="margin-top:4px">${esc(r.mainStrength)}</p></div>
+            <div class="box r"><h3 style="color:var(--red-tx)">! Principal ponto de melhoria</h3><p style="margin-top:4px">${esc(r.mainImprovement)}</p></div></div>
+        </div>
+        <h2 style="margin:24px 0 12px">Score por etapa</h2>
+        <div style="display:grid;gap:10px">${(r.stages||[]).map(s=>{const k=tone(s.score);return`<div class="box"><div class="row between" style="margin-bottom:8px"><b>${esc(s.name)}</b><span class="pill ${k.c}">${s.score}/100</span></div>${prog(s.score,k.col)}</div>`}).join("")||`<p class="muted small">—</p>`}</div>`:""}
+      ${tab==="etapas"?`<div style="display:grid;gap:18px">${(r.stages||[]).map(s=>{const k=tone(s.score);return`<div><div class="row wrapf"><h3>${esc(s.name)}</h3>${s.timestamp?`<span class="pill">${esc(s.timestamp)}</span>`:""}<span class="pill ${k.c}">${s.score} pts</span></div>
+        <div class="grid2" style="margin-top:10px"><div class="box g"><span class="label" style="color:var(--green-tx)">Pontos positivos</span><ul style="padding-left:18px">${(s.positivePoints||[]).map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div>
+        <div class="box r"><span class="label" style="color:var(--red-tx)">A melhorar</span><ul style="padding-left:18px">${(s.improvementPoints||[]).map(p=>`<li>${esc(p)}</li>`).join("")}</ul></div></div></div>`}).join("")||`<p class="muted">—</p>`}</div>`:""}
+      ${tab==="criterios"?`<div class="grid2">${(r.criteriaScores||[]).map(c=>{const k=tone(c.score*10);return`<div class="box"><div class="row between"><b>${esc(c.criterion)}</b><span class="pill ${k.c}">${c.score}/10</span></div><p class="small muted" style="margin-top:6px">${esc(c.feedback)}</p></div>`}).join("")}</div>
+        <div class="grid2" style="margin-top:24px"><div><h2>Aderência ao checklist</h2><div class="box" style="margin:10px 0"><div class="row between"><span class="big" style="font-size:36px;color:${tone(r.adherenceScore).col}">${r.adherenceScore||0}%</span><span class="pill ${tone(r.adherenceScore).c}">${tone(r.adherenceScore).l}</span></div>${prog(r.adherenceScore,tone(r.adherenceScore).col)}</div>
+          ${(r.completedItems||[]).map(i=>`<div class="box small" style="margin-bottom:6px">✅ ${esc(i)}</div>`).join("")}</div>
+          <div><h2>Objeções e técnicas</h2><div class="box" style="margin:10px 0"><span class="label">Objeções contornadas</span><div class="big" style="font-size:32px">${r.objectionsHandledCount||0}</div></div>
+          <div class="row wrapf">${(r.techniquesUsed||[]).map(t=>`<span class="pill blue">${esc(t)}</span>`).join("")}</div></div></div>`:""}
+      ${tab==="tx"?`<div style="display:flex;flex-direction:column;gap:10px">${(r.transcript||[]).map(m=>`<div class="msg ${m.speaker==="ANALISTA"?"an":"cl"}"><small>${m.speaker==="ANALISTA"?"Analista":"Cliente (IA)"} · ${esc(m.timestamp)}</small>${esc(m.text)}</div>`).join("")||`<p class="muted">Sem transcrição.</p>`}</div>`:""}
+    </section>`;
+    v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;draw()});
+    const reval=async btn=>{btn.disabled=true;btn.textContent="Avaliando...";try{await evaluateRun(id)}catch(e){alert("Não foi possível avaliar: "+e.message)}draw()};
+    $("#re").onclick=e=>reval(e.target);const re2=$("#re2");if(re2)re2.onclick=e=>reval(e.target);
+    $("#exp").onclick=()=>{const txt=`Análise de Roleplay\n${r.agentName} — ${new Date(r.date).toLocaleString("pt-BR")}\nScore: ${r.score} | Aderência: ${r.adherenceScore}%\n\nPonto forte: ${r.mainStrength}\nPonto de melhoria: ${r.mainImprovement}\n\nCritérios:\n${(r.criteriaScores||[]).map(c=>`- ${c.criterion}: ${c.score}/10 — ${c.feedback}`).join("\n")}\n\nTranscrição:\n${txText(r.transcript)}`;
+      const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain"}));a.download=`roleplay-${id}.txt`;a.click()};
+    $("#del").onclick=()=>{if(confirm("Excluir esta simulação?")){db.delRun(id);location.hash="#/historico"}};
+  };
+  draw();
+}
+
+/* =====================================================================
+   5) CRIAR AGENTE VIA CALL REAL
+   ===================================================================== */
+function viewClone(){
+  const v=$("#view");let b64="",mime="audio/webm",analysis=null,agent=null;
+  const prods=[...new Set(db.agents().map(a=>a.productName))];
+  v.innerHTML=`<div><span class="pill blue">✨ Inteligência de chamadas</span><h1 style="margin-top:8px">Criar agente a partir de uma ligação real</h1>
+    <p class="muted">Suba a gravação (ou cole a transcrição) de uma call real. A IA mapeia o perfil do cliente, dores e objeções e gera uma persona pronta para treinar.</p></div>
+  <div id="err"></div>
+  <section class="card"><h2>Etapa 1 · Ligação real</h2>
+    <div class="drop" id="drop" style="margin-top:14px"><input type="file" id="file" accept="audio/*" class="hidden">
+      <b id="fname">Clique ou arraste o áudio da ligação</b><p class="small muted">MP3, WAV, M4A, WEBM, OGG · até ~3 MB (limite da Vercel). Para calls longas, cole a transcrição.</p></div>
+    <div id="audioBox" class="hidden row wrapf" style="margin-top:12px"><audio id="aud" controls style="flex:1;min-width:240px"></audio><button class="btn" id="trans">Gerar transcrição com IA</button></div>
+    <span class="label" style="margin-top:18px">Transcrição da ligação</span>
+    <textarea class="input" id="tr" rows="9" placeholder="Cole aqui a transcrição (ex.: exportada do Meet/tl;dv) ou gere a partir do áudio..."></textarea>
+    <div class="grid2" style="margin-top:12px">
+      <div><span class="label">Produto do cenário</span><input class="input" id="prod" list="prodl" value="${esc(prods[0]||"Radar e-CAC")}"><datalist id="prodl">${prods.map(p=>`<option value="${esc(p)}">`).join("")}</datalist></div>
+      <div><span class="label">Contexto do gestor (opcional)</span><input class="input" id="ctx" placeholder="Ex.: cliente antigo, resistente a preço, foco em monitoramento"></div>
+    </div>
+    <div style="text-align:right;margin-top:14px"><button class="btn" id="an">Analisar ligação e gerar agente</button></div>
+  </section>
+  <div id="res"></div>`;
+  const err=m=>$("#err").innerHTML=m?`<div class="alert r">${esc(m)}</div>`:"";
+  const pick=f=>{if(!f)return;err("");if(f.size>3.3*1024*1024)err("Arquivo grande demais para enviar pela Vercel (>3 MB). Corte o áudio ou cole a transcrição.");
+    mime=f.type||"audio/webm";$("#fname").textContent=f.name+" · "+(f.size/1048576).toFixed(2)+" MB";$("#aud").src=URL.createObjectURL(f);$("#audioBox").classList.remove("hidden");
+    const fr=new FileReader();fr.onload=()=>{b64=String(fr.result).split(",")[1]};fr.readAsDataURL(f)};
+  $("#drop").onclick=()=>$("#file").click();$("#file").onchange=e=>pick(e.target.files[0]);
+  $("#drop").ondragover=e=>e.preventDefault();$("#drop").ondrop=e=>{e.preventDefault();pick(e.dataTransfer.files[0])};
+  $("#trans").onclick=async e=>{if(!b64)return err("Selecione um áudio.");e.target.disabled=true;e.target.textContent="Transcrevendo...";err("");
+    try{$("#tr").value=(await api("/api/transcribe",{audioBase64:b64,mimeType:mime})).transcript}catch(x){err("Erro na transcrição: "+x.message)}e.target.disabled=false;e.target.textContent="Gerar transcrição com IA"};
+  $("#an").onclick=async e=>{const t=$("#tr").value.trim();if(t.length<20)return err("A transcrição está vazia ou curta demais.");
+    e.target.disabled=true;e.target.textContent="Diagnosticando call...";err("");
+    try{const o=await api("/api/clone",{transcript:t,contextNotes:$("#ctx").value,productName:$("#prod").value});analysis=o.analysis;agent={...o.generatedAgent,productName:$("#prod").value||o.generatedAgent.productName};drawRes()}
+    catch(x){err("Falha na análise: "+x.message)}e.target.disabled=false;e.target.textContent="Analisar ligação e gerar agente"};
+
+  function drawRes(){
+    const p=analysis.clientProfile||{},c=analysis.currentScenario||{};
+    $("#res").innerHTML=`<h2 style="margin:8px 0 12px">Etapa 2 · Diagnóstico da call</h2>
+    <div class="grid3">
+      <div class="card"><h3>👤 Perfil do decisor</h3><p style="margin-top:8px"><b>${esc(p.decisionMakerName)}</b> <span class="pill blue">${esc(p.gender||"")}</span></p>
+        <p class="small">${esc(p.role)} · ${esc(p.officeName)}</p><p class="small muted">${esc(p.segment)} · ${esc(p.estimatedSize)}</p>
+        <div class="box small" style="margin-top:8px"><b>Temperamento:</b> ${esc(p.temperament)}</div><div class="box small" style="margin-top:6px"><b>Comunicação:</b> ${esc(p.communicationStyle)}</div></div>
+      <div class="card"><h3>🏢 Cenário e dores</h3><div class="row wrapf" style="margin:8px 0">${(c.currentTools||[]).map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div>
+        ${(c.painPoints||[]).map(x=>`<div class="box r small" style="margin-bottom:6px">${esc(x)}</div>`).join("")}<div class="box small"><b>Necessidade latente:</b> ${esc(c.latentNeeds)}</div></div>
+      <div class="card"><h3>🛡️ Objeções reais (${(analysis.objections||[]).length})</h3>${(analysis.objections||[]).map(o=>`<div class="box small" style="margin-top:6px"><span class="pill ${o.severity==="alta"?"r":o.severity==="media"?"a":"g"}">${esc(o.severity)}</span> ${esc(o.text)}</div>`).join("")}</div>
+    </div>
+    <section class="card"><h2>Etapa 3 · Revise e salve o agente</h2>${agentForm(agent)}<div style="text-align:right;margin-top:14px"><button class="btn" id="save">Salvar e ativar agente</button></div><div id="ok"></div></section>`;
+    $("#save").onclick=()=>{const a=readAgentForm(agent);a.id=a.id||uid();a.active=true;db.saveAgent(a);
+      $("#ok").innerHTML=`<div class="alert b" style="margin-top:12px">✅ Agente salvo! <a href="#/sessao/${a.id}"><b>Treinar com ele agora →</b></a></div>`};
+  }
+}
+
+/* form compartilhado de agente */
+function agentForm(a){
+  return `<div class="grid2" style="margin-top:12px">
+    <div><span class="label">Produto</span><input class="input" id="f_prod" value="${esc(a.productName)}"></div>
+    <div><span class="label">Título do cenário</span><input class="input" id="f_name" value="${esc(a.name)}"></div>
+    <div><span class="label">Escritório</span><input class="input" id="f_off" value="${esc(a.officeName)}"></div>
+    <div><span class="label">Decisor</span><input class="input" id="f_dm" value="${esc(a.decisionMakerName)}"></div>
+    <div><span class="label">Voz</span><select class="input" id="f_voice">${VOICES.map(([n,t,g])=>`<option value="${n}" ${n===a.voice?"selected":""}>${n} · ${g} · ${t}</option>`).join("")}</select></div>
+    <div><span class="label">Descrição curta</span><input class="input" id="f_desc" value="${esc(a.description)}"></div>
+  </div>
+  <span class="label" style="margin-top:12px">Persona (instrução da IA)</span><textarea class="input" id="f_persona" rows="8">${esc(a.persona)}</textarea>
+  <div class="grid2" style="margin-top:12px">
+    <div><span class="label">Objeções (uma por linha)</span><textarea class="input" id="f_obj" rows="5">${esc((a.objections||[]).join("\n"))}</textarea></div>
+    <div><span class="label">Checklist do analista (uma por linha)</span><textarea class="input" id="f_chk" rows="5">${esc((a.scriptItems||[]).join("\n"))}</textarea></div>
+  </div>`;
+}
+function readAgentForm(base){
+  const lines=id=>$(id).value.split("\n").map(s=>s.trim()).filter(Boolean);
+  return {...base,productName:$("#f_prod").value.trim()||"Geral",name:$("#f_name").value.trim(),officeName:$("#f_off").value.trim(),
+    decisionMakerName:$("#f_dm").value.trim(),voice:$("#f_voice").value,description:$("#f_desc").value.trim(),
+    persona:$("#f_persona").value.trim(),objections:lines("#f_obj"),scriptItems:lines("#f_chk")};
+}
+
+/* =====================================================================
+   6) CONFIGURAÇÕES: personas + rubrica + ajustes
+   ===================================================================== */
+function viewConfig(){
+  const v=$("#view");let editing=null;
+  const draw=()=>{
+    const s=db.settings(),agents=db.agents(),p=s.profile;
+    v.innerHTML=`<h1>Personas & Rubrica</h1>
+    <section class="card"><h2>Ajustes</h2><div class="grid2" style="margin-top:12px">
+      <div><span class="label">Seu nome (analista)</span><input class="input" id="s_name" value="${esc(s.analystName)}"></div>
+      <div><span class="label">Modelo de voz (Gemini Live)</span><input class="input" id="s_model" value="${esc(s.liveModel)}"></div></div>
+      <div style="text-align:right;margin-top:12px"><button class="btn sm" id="s_save">Salvar ajustes</button></div></section>
+
+    <section class="card"><div class="row between"><h2>Personas (${agents.length})</h2><div class="row"><button class="btn sm ghost" id="a_reset">Restaurar padrão</button><button class="btn sm" id="a_new">+ Nova persona</button></div></div>
+      <div style="display:grid;gap:10px;margin-top:14px">${agents.map(a=>`<div class="box row between wrapf">
+        <div><b>${esc(a.decisionMakerName)}</b> · ${esc(a.officeName)} <span class="pill">${esc(a.productName)}</span> ${a.active===false?`<span class="pill r">inativa</span>`:`<span class="pill g">ativa</span>`}<br><small class="muted">${esc(a.name)} · voz ${esc(a.voice)}</small></div>
+        <div class="row"><a class="btn sm ghost" href="#/sessao/${a.id}">Testar</a><button class="btn sm ghost" data-tg="${a.id}">${a.active===false?"Ativar":"Desativar"}</button><button class="btn sm ghost" data-ed="${a.id}">Editar</button><button class="btn sm ghost" data-dl="${a.id}" style="color:var(--red)">Excluir</button></div></div>
+        ${editing&&editing.id===a.id?`<div class="card">${agentForm(a)}<div style="text-align:right;margin-top:12px"><button class="btn sm ghost" id="e_cancel">Cancelar</button> <button class="btn sm" id="e_save">Salvar</button></div></div>`:""}`).join("")}
+        ${editing&&!agents.some(a=>a.id===editing.id)?`<div class="card"><h3>Nova persona</h3>${agentForm(editing)}<div style="text-align:right;margin-top:12px"><button class="btn sm ghost" id="e_cancel">Cancelar</button> <button class="btn sm" id="e_save">Salvar</button></div></div>`:""}
+      </div></section>
+
+    <section class="card"><div class="row between"><h2>Rubrica de avaliação</h2><button class="btn sm ghost" id="r_reset">Restaurar padrão</button></div>
+      <p class="small muted">Nota final = média ponderada dos critérios (1–10) × 10.</p>
+      <span class="label" style="margin-top:12px">Instrução do avaliador</span><textarea class="input" id="r_pre" rows="4">${esc(p.preamble)}</textarea>
+      <div id="crit" style="display:grid;gap:10px;margin-top:12px">${p.criteria.map((c,i)=>`<div class="box"><div class="row"><input class="input" data-cl="${i}" value="${esc(c.label)}"><input class="input" data-cw="${i}" type="number" min="0" max="100" value="${c.weight}" style="width:90px" title="peso"><button class="btn sm ghost" data-cx="${i}" style="color:var(--red)">✕</button></div>
+        <textarea class="input" data-cr="${i}" rows="3" style="margin-top:8px">${esc(c.rubric)}</textarea></div>`).join("")}</div>
+      <div class="row between" style="margin-top:12px"><button class="btn sm ghost" id="c_add">+ Critério</button><button class="btn sm" id="r_save">Salvar rubrica</button></div></section>`;
+
+    $("#s_save").onclick=()=>{db.saveSettings({analystName:$("#s_name").value.trim(),liveModel:$("#s_model").value.trim()||DEFAULT_SETTINGS.liveModel});route()};
+    $("#a_new").onclick=()=>{editing={id:uid(),active:true,productName:"Radar e-CAC",voice:"Kore",objections:[],scriptItems:[]};draw()};
+    $("#a_reset").onclick=()=>{if(confirm("Substituir as personas pelas padrão?")){LS.set("sim_agents",DEFAULT_AGENTS);draw()}};
+    v.querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>{editing=db.agents().find(a=>a.id===b.dataset.ed);draw()});
+    v.querySelectorAll("[data-tg]").forEach(b=>b.onclick=()=>{const a=db.agents().find(x=>x.id===b.dataset.tg);a.active=a.active===false;db.saveAgent(a);draw()});
+    v.querySelectorAll("[data-dl]").forEach(b=>b.onclick=()=>{if(confirm("Excluir esta persona?")){db.delAgent(b.dataset.dl);draw()}});
+    const es=$("#e_save");if(es)es.onclick=()=>{db.saveAgent(readAgentForm(editing));editing=null;draw()};
+    const ec=$("#e_cancel");if(ec)ec.onclick=()=>{editing=null;draw()};
+    const readCrit=()=>[...v.querySelectorAll("[data-cl]")].map(e=>{const i=e.dataset.cl;return{label:e.value.trim(),weight:Number(v.querySelector(`[data-cw="${i}"]`).value)||1,rubric:v.querySelector(`[data-cr="${i}"]`).value.trim()}}).filter(c=>c.label);
+    const saveProf=crit=>db.saveSettings({profile:{...db.settings().profile,preamble:$("#r_pre").value.trim(),criteria:crit}});
+    $("#c_add").onclick=()=>{saveProf([...readCrit(),{label:"Novo critério",weight:1,rubric:""}]);draw()};
+    v.querySelectorAll("[data-cx]").forEach(b=>b.onclick=()=>{const c=readCrit();c.splice(+b.dataset.cx,1);saveProf(c);draw()});
+    $("#r_save").onclick=()=>{const c=readCrit();if(!c.length)return alert("Mantenha ao menos 1 critério.");saveProf(c);alert("Rubrica salva ✅")};
+    $("#r_reset").onclick=()=>{if(confirm("Restaurar a rubrica padrão?")){db.saveSettings({profile:DEFAULT_PROFILE});draw()}};
+  };
+  draw();
+}
+
+route();
+</script>
+</body>
+</html>
